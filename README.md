@@ -61,53 +61,110 @@ They are three different things, with different reload semantics (check your hos
 
 ---
 
-## 5. Quick install (from repo to running in ~10 minutes)
+## 5. How to install (two routes, pick one)
 
-> Shown with **DeepSeek Harness**; other hosts only differ in step 3's file location (table at the end).
+> **Definition of done:** ask your agent "What capabilities do you have?" — it should answer with categories and counts, not make things up.
 
-### Step 1: Get this repo
+### Route A: Copy the text to your agent (easiest, recommended)
+
+> Copy the **whole block below** and send it to your agent (paste into chat, or write it into a file it always reads). It will create the three volumes in your environment by itself.
+
+```
+[TASK: Create the "Capability Trilogy"]
+You are this machine's AI agent. Create a "Capability Trilogy" in my environment, so that any AI that reads it knows what capabilities it has and when to use which.
+
+1. Create 3 kinds of files:
+1. Index volumes (tell the agent what exists): SKILLS-INDEX.md, PLUGINS-INDEX.md, MCP-INDEX.md
+2. Template volumes (tell the agent how to add new capabilities): SKILL-TEMPLATE.md, PLUGIN-TEMPLATE.md, MCP-TEMPLATE.md
+3. Rules volume (tell the agent when to use which): write into my system prompt file (DeepSeek Harness → ~/.dsh/AGENTS.md; OpenClaw → agent persona config; Claude Code → CLAUDE.md; Cursor → .cursorrules)
+
+2. How to write the index volumes:
+- One line per capability: | Capability | What it does |
+- Describe it the way the user would say it, not by feature name
+- e.g. | pdf | read/create/convert/fill forms |  | excel | spreadsheet read/write/analyze |
+- Before writing, scan real files (find all SKILL.md frontmatter name+description). Never invent from imagination
+- Few capabilities (<20) → write by hand; many (>100) → generate with a script
+
+3. How to write the template volumes:
+- One template per capability type, containing: name / description / when to use (incl. not applicable) / prerequisites / steps / output spec / pitfalls
+- Most important: description must contain the words the user will actually say; a feature name will never match
+- e.g. Don't write "PDF processor"; write "Use when the user mentions 'PDF, convert to PDF, read PDF, fill forms'"
+
+4. What the rules volume must contain (must go into the system prompt FILE, not just said in chat):
+[Iron rules]
+1. On receiving a task → check the capability index first
+2. On a hit → read the full manual before acting; never act from memory
+3. On a miss → use general ability and tell the user "no matching capability, handling with general ability"
+4. Read only the hit. Never read all manuals
+5. If the user names a capability → read it directly, skip the index
+6. Deliver per the manual's output spec, and state the verification result
+[Discovery flow]
+Receive task → scan skills dirs (if Chinese doesn't match → check categorized index) → match by trigger keywords → hit? → read full manual → follow steps; no hit → answer with general ability
+[Discipline]
+- For tool-type requests (docs/web/sheets/images/search/scheduling etc.) → check skills first by default; don't improvise
+- When a manual conflicts with common sense, follow the manual; if the manual is wrong, note the deviation after executing
+- Check environment before using a skill; report the cause on failure; never degrade silently
+- Deliverables must state: file name, save path, how to open
+
+5. Definition of done:
+- Ask me "What capabilities do you have?" → I answer with categories and counts, not made up
+- Give me a task with an obvious matching skill → I check the index first, then act
+- All three kinds of files exist, rules written into the system prompt file
+```
+
+### Route B: Command-line install (do it yourself, DeepSeek Harness example)
+
+#### Prerequisite: Node.js v18+
+
+Windows check: `node -v` (if missing, install the LTS from nodejs.org).
+
+#### Step 1: Get this repo
 
 ```bash
 git clone https://github.com/qinglong-ql/agent-capability-kit.git
-# or click Code → Download ZIP and unzip anywhere
+cd agent-capability-kit
+# or click Code → Download ZIP, unzip and cd in
 ```
 
-### Step 2: Copy the templates into your skills dir
+#### Step 2: Copy templates into your skills dir
 
 ```bash
-# Copy the 3 templates as reference formats (don't overwrite existing files)
+mkdir -p ~/.dsh/skills/_templates
 cp templates/*.md ~/.dsh/skills/_templates/
 ```
 
-### Step 3: Put the rules into your system prompt file (most important)
-
-Open (or create) `~/.dsh/AGENTS.md` and **append** the contents of [`examples/AGENTS.md.example`](examples/AGENTS.md.example). Save.
-
-> ⚠️ Get this wrong and nothing else matters. The rules must live in a file, not be said once in chat.
-
-### Step 4: Scan your real skills, generate the index
-
-First open `tools/dump-skills.cjs` and change the `dirs` array at the top to **your host's skills directories**, then:
+#### Step 3: Put the rules into your system prompt file (most important)
 
 ```bash
-node tools/dump-skills.cjs        # scan → %TEMP%/skills-inventory.json
-node tools/gen-skills-index.cjs   # generate → ~/.dsh/SKILLS-INDEX.zh.md
+# backup first
+cp ~/.dsh/AGENTS.md ~/.dsh/AGENTS.md.bak.$(date +%Y%m%d%H%M%S)
+
+# append the rules example (creates AGENTS.md if missing)
+type examples\AGENTS.md.example >> ~/.dsh\AGENTS.md
+# macOS/Linux: cat examples/AGENTS.md.example >> ~/.dsh/AGENTS.md
 ```
 
-Plugins index, same idea (first edit `profileDir` in `tools/dump-plugins.cjs`):
+> ⚠️ Get this wrong and nothing else matters. Rules must live in a file, not be said once in chat.
+
+#### Step 4: Scan real skills, generate the index
 
 ```bash
+# First edit the dirs array at the top of tools/dump-skills.cjs to your skills dirs
+# e.g. const dirs = [path.join(HOME, '.dsh', 'skills'), path.join(HOME, '.agents', 'skills')];
+
+node tools/dump-skills.cjs        # scan → %TEMP%/skills-inventory.json
+node tools/gen-skills-index.cjs   # generate → ~/.dsh/SKILLS-INDEX.zh.md
+
+# Plugins index (first edit profileDir in dump-plugins.cjs)
 node tools/dump-plugins.cjs
 node tools/gen-plugins-index.cjs  # generate → ~/.dsh/PLUGINS-INDEX.zh.md
 ```
 
-> Requires Node.js (v18+). All four scripts are pure Node, zero dependencies.
-
-### Step 5: Restart and verify
+#### Step 5: Restart and verify
 
 - Skills: **reload the session**
 - Plugins / MCP: **restart the host**
-- Then ask it: **"What capabilities do you have?"** — if it answers with categories and counts, you're done
+- Then ask it: **"What capabilities do you have?"** — categories and counts = done
 
 ### Other hosts: step 3's file location
 
@@ -120,9 +177,9 @@ node tools/gen-plugins-index.cjs  # generate → ~/.dsh/PLUGINS-INDEX.zh.md
 
 ---
 
-## 6. Build it yourself (optional, 5 steps)
+## 6. Build it yourself (optional, from scratch)
 
-> Only if you want to start from scratch instead of using the ready-made templates.
+> Only if you want to start from zero instead of using the ready-made templates.
 
 ### Step 1: See what you actually have
 
@@ -187,15 +244,15 @@ Put these into your host's **system prompt file** (not once in chat):
 ```
 <your host root>/
 ├── AGENTS.md (or CLAUDE.md / .cursorrules)  ← Volume III: rules
-├── SKILLS-INDEX.md                          ← Volume I: skills
-├── PLUGINS-INDEX.md                         ← Volume I: plugins
-├── MCP-INDEX.md                             ← Volume I: MCP
+├── SKILLS-INDEX.zh.md                       ← Volume I: skills
+├── PLUGINS-INDEX.zh.md                      ← Volume I: plugins
+├── MCP-INDEX.zh.md                          ← Volume I: MCP
 ├── SKILL-TEMPLATE.md                        ← Volume II: skills
 ├── PLUGIN-TEMPLATE.md                       ← Volume II: plugins
 └── MCP-TEMPLATE.md                          ← Volume II: MCP
 ```
 
-**7 markdown files. No dependencies, no code required.**
+**7 files (incl. AGENTS.md) is the whole footprint. No dependencies, no code required.**
 
 ---
 
