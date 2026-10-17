@@ -231,7 +231,7 @@ out += '---\n\n';
 out += '# DSH 技能索引（中文分门别类版）\n\n';
 out += '> **这份文件是给「我」（DSH agent）自己看的技能目录。**\n';
 out += '>\n';
-out += '> DSH 的机制和豆包那套「INDEX.md + SKILL.md」是等价的：\n';
+out += '> DSH 的机制是「索引 + 说明书」两段式：\n';
 out += '>\n';
 out += '> | 机制 | DSH 对应物 |\n';
 out += '> |---|---|\n';
@@ -290,7 +290,7 @@ if (other.length) {
 
 out += '---\n\n';
 out += '## 怎么写一个新技能（DSH 版说明书模板）\n\n';
-out += 'DSH 的 SKILL.md 格式（比豆包那套更简洁，但同样是 frontmatter + 正文）：\n\n';
+out += 'DSH 的 SKILL.md 格式（frontmatter + 正文）：\n\n';
 out += '```markdown\n';
 out += '---\n';
 out += 'name: 技能短名（英文小写，与文件夹同名）\n';

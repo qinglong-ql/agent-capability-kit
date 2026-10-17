@@ -105,7 +105,7 @@
 | `web_search` | 网络搜索，返回摘要 + 来源 URL |
 | `web_fetch` | 抓指定 URL 内容转文本 |
 | `deep-research` | 深度调研：多轮检索 + 证据分级 |
-| `doubao-academic-researcher` | 学术文献调研：方向摸底、检索 |
+| `academic-researcher` | 学术文献调研：方向摸底、检索 |
 | `competitorsmart` | 竞品分析 |
 | `baoyu-url-to-markdown` | URL 转 markdown（走 CDP） |
 

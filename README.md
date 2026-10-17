@@ -1,223 +1,233 @@
-# 能力三卷 · Capability Trilogy
+# Agent Capability Kit
 
-> **让 AI agent 不再瞎干：动手前先查目录，命中就读说明书按步骤做，没命中才用通用能力。**
+> **Your AI agent has 375 skills and 39 plugins. It doesn't know that.**
+>
+> A three-volume system that teaches an agent what it can do — before it starts doing.
 
-一套给 AI agent 的「能力管理」方法 —— 索引卷管**有什么**，模板卷管**怎么加**，规矩卷管**什么时候用**。
-
-适用于任何有技能 / 插件 / MCP 体系的 agent 宿主：[DeepSeek Harness](#)、OpenClaw、Claude Code、Cursor、自研 agent。
+[中文版](README.zh-CN.md) · [Full Manual](MANUAL.md) · [Templates](templates/) · [Pitfalls](docs/07-pitfalls.md)
 
 ---
 
-## 这套东西解决什么问题
+## The problem
 
-AI agent 有几百个技能、几十个插件、几个 MCP，但**它不知道自己有什么**。于是：
+You give an agent a big toolbox. It ignores it and builds everything from scratch.
 
-| 坏情况 | 表现 | 代价 |
+Two failure modes, both expensive:
+
+| Failure | What it looks like | Cost |
 |---|---|---|
-| **A. 硬做** | 明明有现成技能/工具，却从零手搓 | 质量差、慢、容易错 |
-| **B. 乱翻** | 把几百份说明书全读一遍 | 烧几万 token、拖慢、跑偏 |
+| **Reinventing** | Has a `pdf` skill, writes its own PDF code anyway | Worse quality, slower, more bugs |
+| **Bingeing** | Reads all 375 SKILL.md files "to be safe" | Tens of thousands of tokens, slower, context blown |
 
-**解法：两段式查找。**
+**Root cause: the agent has no map of its own capabilities.**
 
-```
-索引（一句话简介，几百条也只占很少上下文）
-   ↓ 匹配命中
-说明书（完整步骤，只读命中那一份）
-   ↓
-按步骤执行
-```
-
-类比：**你不可能让人把整个图书馆的书都读一遍，再决定借哪本。**
+You can't hand someone a library and expect them to read every book before picking one.
 
 ---
 
-## 三卷是什么
+## The solution
 
-| 卷 | 文件 | 回答什么 | 缺了会怎样 |
+**Two-stage lookup.**
+
+```
+INDEX  ──►  one line per capability, 375 entries still costs little context
+              │
+              ▼  keyword match
+MANUAL ──►  full SKILL.md, only the one that matched
+              │
+              ▼
+          execute per the manual
+```
+
+Plus a third volume that makes sure the lookup *actually happens*:
+
+```
+System prompt  ──►  "Scan the index first. Read the manual on hit. Don't guess."
+```
+
+**That's the whole idea.**
+
+---
+
+## Three volumes
+
+| Volume | File | Answers | Missing means |
 |---|---|---|---|
-| **卷一 · 索引** | `SKILLS-INDEX.md` / `PLUGINS-INDEX.md` / `MCP-INDEX.md` | **有什么能力？** | 有规矩但没东西可查 |
-| **卷二 · 模板** | `SKILL-TEMPLATE.md` / `PLUGIN-TEMPLATE.md` / `MCP-TEMPLATE.md` | **怎么加新能力？** | 会加，但加完 agent 发现不了 |
-| **卷三 · 规矩** | `AGENTS.md`（写进 system prompt） | **什么时候该用哪个？** | 有目录但不知道什么时候查 |
+| **I · Index** | `SKILLS-INDEX.md` `PLUGINS-INDEX.md` `MCP-INDEX.md` | **What do I have?** | Rules with nothing to look up |
+| **II · Template** | `SKILL-TEMPLATE.md` `PLUGIN-TEMPLATE.md` `MCP-TEMPLATE.md` | **How do I add more?** | Can extend, but agent never finds it |
+| **III · Rules** | System prompt (`AGENTS.md` / `CLAUDE.md` / `.cursorrules`) | **When do I use which?** | A map nobody reads |
 
-**三卷必须齐。** 只做一两卷转不起来。
+**All three or it doesn't work.** One or two of them just moves the problem.
 
 ---
 
-## 为什么要分成「技能 / 插件 / MCP」三类
+## Why split skills / plugins / MCP?
 
-这是最容易搞混的地方。三者**不是一回事**：
+This is where most people get it wrong. They are **not the same thing**:
 
-| | 是什么 | 谁提供 | 怎么装 | 产生什么 | 改完怎么生效 |
+| | What it is | Who provides | How to install | Produces | Reload needed |
 |---|---|---|---|---|---|
-| **技能** | 干某类活的**流程说明书**（markdown） | 社区 / 自己写 | 放进 `skills/` 目录 | **不产生工具**，靠 `skill({name})` 读 | 重载会话 |
-| **插件** | 给宿主**自己长出来的能力**（npm 包等） | 社区 / 自己写 | 包管理器安装 + 加进装载列表 | 插件自定义的工具 | **重启宿主** |
-| **MCP** | **把外部程序的能力接进来** | 任何语言的独立程序 | 配置文件加 `mcp-*` 条目 | `mcp__<serverName>__<tool>` | **重启宿主** |
+| **Skill** | A **procedure** (markdown) | Community / you | Drop into `skills/` | **No tools** — read via `skill({name})` | Reload session |
+| **Plugin** | A **capability built into the host** (npm package etc.) | Community / you | Package manager + register in bundle list | Tools the plugin defines | **Restart host** |
+| **MCP** | **Borrowing another program's capability** | Any program, any language | Add `mcp-*` entry to config | `mcp__<serverName>__<tool>` | **Restart host** |
 
-**一句话记：**
-- 技能 = 「怎么干」
-- 插件 = 「自己长出来的手」
-- **MCP = 「把别人的手接上」**
+**In one line each:**
+- Skill = *how to do it*
+- Plugin = *a hand the host grew itself*
+- **MCP = *bolting on someone else's hand***
 
-**为什么必须分开建索引**：三者的**生效时机不同**。混在一份索引里，agent 会搞错「改完要不要重启」。
+**Why three separate indexes**: their **reload semantics differ**. Mix them into one list and the agent will restart the host when it only needed to reload a session.
 
 ---
 
-## 快速开始（5 分钟）
+## Quick start
 
-### 1. 摸家底（别凭想象写索引）
+### 1. Take inventory (don't guess)
 
 ```bash
-# 技能：扫所有 SKILL.md 的 frontmatter
-find <SKILLS_DIR> -name SKILL.md
-
-# 插件：读 profile 的 package.json
-cat <HOST_HOME>/profiles/<profile>/package.json
-
-# MCP：读配置
+node tools/dump-skills.cjs      # scan all SKILL.md frontmatter
+node tools/dump-plugins.cjs     # read host profile package.json
 grep -n "mcp-" <HOST_HOME>/profiles/<profile>/cordis.patch.yml
 ```
 
-### 2. 生成索引
+### 2. Generate the index
 
 ```bash
-node tools/dump-skills.cjs        # 扫出技能清单 → %TEMP%/skills-inventory.json
-node tools/gen-skills-index.cjs   # 自动分类 → ~/.dsh/SKILLS-INDEX.zh.md
+node tools/gen-skills-index.cjs     # auto-classify → SKILLS-INDEX.md
+node tools/gen-plugins-index.cjs    # → PLUGINS-INDEX.md
 ```
 
-### 3. 写规矩（最关键）
+### 3. Write the rules — **the critical step**
 
-把 [`templates/AGENTS.md.example`](examples/AGENTS.md.example) 的内容追加到宿主的 system prompt 文件：
+Copy [`examples/AGENTS.md.example`](examples/AGENTS.md.example) into your host's system prompt:
 
-| 宿主 | system prompt 位置 |
+| Host | Where |
 |---|---|
-| **DeepSeek Harness** | `<DSH_HOME>/AGENTS.md`（用户级）+ 工作区 `AGENTS.md`（项目级） |
-| **OpenClaw** | agent 的 persona / system prompt 配置 |
-| **Claude Code** | 项目根 `CLAUDE.md` |
+| **DeepSeek Harness** | `<DSH_HOME>/AGENTS.md` (user) + workspace `AGENTS.md` (project) |
+| **OpenClaw** | agent persona / system prompt config |
+| **Claude Code** | `CLAUDE.md` at project root |
 | **Cursor** | `.cursorrules` |
+| **Custom** | Your own system-prompt assembly |
 
-### 4. 验证
+**Why a file and not a chat message**: a chat instruction lasts one turn. A system-prompt file is injected in full at the start of every session.
 
-**最硬的验证：给它一个有对应技能的任务，看它会不会先查。**
+### 4. Verify
 
-- 会先查 → ✅ 规矩生效了
-- 直接上手 → ❌ 没生效，回去检查规矩是不是写进了 system prompt
+**The hardest test**: give it a task that clearly has a matching skill.
+
+- It says *"let me check the skill index"* → ✅ working
+- It just starts building → ❌ not working, go check step 3
 
 ---
 
-## 目录结构
+## Real numbers
+
+This system was built and measured on a live host, not sketched on a whiteboard:
+
+| Metric | Value |
+|---|---|
+| Unique skills discovered | **375** |
+| Auto-classified | **375 / 375** (18 categories, 0 uncategorized) |
+| Plugins catalogued | **39** (16 declared + 4 core bundles + 19 sub-plugins) |
+| MCP servers | 2 (1 active, 1 configured pending restart) |
+| Generated index size | ~104 KB |
+| Environment | DeepSeek Harness 0.1.7-rc.2 · Windows · Node v25.2.1 |
+
+---
+
+## Seven pitfalls (all hit for real)
+
+→ Full write-up: [`docs/07-pitfalls.md`](docs/07-pitfalls.md)
+
+The three that hurt most:
+
+### ⚠️ 1. Never classify by directory path
+
+We grouped an `expert-library/` directory into "persona" and **217 wildly unrelated skills** landed in one bucket — because that directory actually contained Amazon ads, legal lookups, travel booking, and game dev.
+
+**Classify by content (name + description), never by path.** Directory structure reflects *who installed it*, not *what it does*.
+
+### ⚠️ 2. Rules must live in the system prompt
+
+| Approach | Effect |
+|---|---|
+| Say it in chat | Works this turn. Gone next turn. |
+| Write it in `AGENTS.md` | Injected in full every session. **Always there.** |
+
+### ⚠️ 3. The index holds one line per item
+
+Long indexes get slow and burn tokens — and the agent starts *reasoning inside the index* instead of reaching for the manual.
+
+**The index is a table of contents, not the content.**
+
+Others: empty descriptions, too-coarse category vocabulary, forgetting to restart, relative paths in MCP `command`.
+
+---
+
+## What's inside
 
 ```
-capability-trilogy/
-├── README.md                          ← 本文件
-├── 能力三卷-总纲.md                    ← 完整方法论文档（12.9 KB，自包含，可交给其他 agent）
-├── LICENSE                            ← MIT
+agent-capability-kit/
+├── README.md                      ← you are here
+├── README.zh-CN.md                ← 中文版
+├── MANUAL.md                      ← full methodology (self-contained, hand-off ready)
+├── LICENSE                        ← MIT
 ├── docs/
-│   ├── 05-how-to-replicate.md         ← 复刻步骤（含时间估算）
-│   └── 07-pitfalls.md                 ← 7 个实测踩过的坑
+│   ├── 05-how-to-replicate.md     ← step-by-step replication
+│   └── 07-pitfalls.md             ← 7 real pitfalls, detailed
 ├── templates/
-│   ├── SKILL-TEMPLATE.md              ← 卷二：技能说明书模板
-│   ├── PLUGIN-TEMPLATE.md             ← 卷二：插件说明书模板
-│   └── MCP-TEMPLATE.md                ← 卷二：MCP 接入模板
+│   ├── SKILL-TEMPLATE.md          ← Volume II: skill
+│   ├── PLUGIN-TEMPLATE.md         ← Volume II: plugin
+│   └── MCP-TEMPLATE.md            ← Volume II: MCP
 ├── examples/
-│   ├── AGENTS.md.example              ← 卷三：规矩卷，可直接照抄
-│   └── SKILLS-INDEX.example.md        ← 卷一：索引写法示例
+│   ├── AGENTS.md.example          ← Volume III: rules, copy-paste ready
+│   └── SKILLS-INDEX.example.md    ← Volume I: index format
 └── tools/
-    ├── README.md                      ← 四个脚本怎么用
-    ├── dump-skills.cjs                ← 扫描技能清单
-    ├── gen-skills-index.cjs           ← 自动分类生成技能索引
-    ├── dump-plugins.cjs               ← 扫描插件清单
-    └── gen-plugins-index.cjs          ← 生成插件索引
+    ├── README.md
+    ├── dump-skills.cjs            ← scan skills
+    ├── gen-skills-index.cjs       ← auto-classify + generate
+    ├── dump-plugins.cjs           ← scan plugins
+    └── gen-plugins-index.cjs      ← generate plugin index
 ```
 
-**从哪开始读**：
+**Where to start:**
 
-| 你想… | 读这个 |
+| You want to… | Read |
 |---|---|
-| 5 分钟了解全貌 | 本 README |
-| 完整方法论 / 交给另一个 agent | [`能力三卷-总纲.md`](能力三卷-总纲.md) |
-| 动手复刻 | [`docs/05-how-to-replicate.md`](docs/05-how-to-replicate.md) |
-| 直接抄规矩 | [`examples/AGENTS.md.example`](examples/AGENTS.md.example) |
-| 少踩坑 | [`docs/07-pitfalls.md`](docs/07-pitfalls.md) |
+| Get the idea in 5 min | this README |
+| Hand it to another agent | [`MANUAL.md`](MANUAL.md) |
+| Actually build it | [`docs/05-how-to-replicate.md`](docs/05-how-to-replicate.md) |
+| Copy the rules | [`examples/AGENTS.md.example`](examples/AGENTS.md.example) |
+| Avoid the mistakes | [`docs/07-pitfalls.md`](docs/07-pitfalls.md) |
 
 ---
 
-## 实测数据（本方法诞生环境）
+## When to use this
 
-| 项 | 数量 |
-|---|---|
-| 扫描到的唯一技能 | **375 个**（两个目录去重后） |
-| 自动归类成功 | **375 / 375**（18 个分类） |
-| 插件 | **39 个**（16 顶层安装 + 4 核心 bundle + 19 聚合包子插件） |
-| MCP | 2 个（1 个已加载，1 个配了待重启） |
-| 生成索引总体积 | 约 104 KB |
+**Good fit:**
+- Your agent has **20+ skills / plugins / MCP servers**
+- You keep catching it "not using the tool it obviously has"
+- You want agent behavior that is **predictable, auditable, extensible**
+- You need multiple agents to **share one capability definition**
 
-**环境**：DeepSeek Harness 0.1.7-rc.2 / Windows / Node v25.2.1
-
----
-
-## 七个实测踩过的坑
-
-详见 [`docs/07-pitfalls.md`](docs/07-pitfalls.md)，先说最狠的三个：
-
-### ⚠️ 1. 千万别按目录路径强归类
-
-**本次就踩了**：把 `expert-library/` 整个目录归成「人物视角」，结果 **217 个五花八门的技能全被塞进一个类别** —— 因为那个目录里其实什么都有（Amazon 运营、法律查询、旅行、游戏开发…）。
-
-**分类必须看内容（name + description），不看路径。**
-
-### ⚠️ 2. 规矩必须写进 system prompt 文件
-
-| 做法 | 效果 |
-|---|---|
-| 对话里说「以后先查技能」 | 只影响当轮，下一轮就忘 |
-| 写进 `AGENTS.md` | 每次会话开头自动全量注入，**永远在** |
-
-### ⚠️ 3. 索引只放一句话，细节留给说明书
-
-索引写太长 → 反而拖慢、烧 token。**索引是目录，不是内容。**
-
-其他四个坑：
-4. 描述为空不处理 → 索引里一堆「（描述为空）」
-5. 分类词表太粗 → 「其他」里堆几十个
-6. 改完不重启 → 插件/MCP 配了不生效
-7. `command` 相对路径不解析 → MCP 找不到命令
+**Overkill:**
+- Fewer than 5 capabilities — just list them in the system prompt
+- Capabilities never change — that's a one-time config, not a system
 
 ---
 
-## 和「豆包方案」的关系
+## Prior art
 
-**原始框架来自豆包**给的 `OpenClaw技能配置`（INDEX.md + SKILL.md 模板 + Agent 系统提示规则）。
+The "index + manual" pattern is common across agent hosts: an `INDEX` listing capabilities, a `SKILL.md` per capability with the actual steps, and rules pinned in the system prompt.
 
-**照搬的部分**：
-- 索引只放一句话简介
-- 说明书命中才读
-- 触发场景写用户原话关键词
-- 规则必须写进 system prompt
+This project **extends** it in four ways:
 
-**扩展的部分**：
-- **从 1 套扩到 3 套**（技能 / 插件 / MCP），因为三者安装和生效机制完全不同
-- **权限声明规范** —— 插件必须说清读写什么、调什么外部服务
-- **安全边界 5 问** —— MCP 是外部程序，权限取决于它自己
-- **「原生插件 vs MCP 怎么选」** —— 插件集成更深，MCP 只是外挂
-- **自动分类脚本** —— 几百个技能人工分类不现实
-- **实测验证方法** —— 怎么确认 MCP 真的加载了
+1. **One volume → three** (skill / plugin / MCP), because their install and reload semantics differ
+2. **Permission declaration standard** — a plugin must state what it reads, writes, and which external services it calls
+3. **Security boundaries for MCP** — it's an external program; its permissions are its own, and "silent degradation" is an anti-pattern
+4. **Auto-classification tooling** — manual classification doesn't scale past ~100 capabilities
 
-**没解决的部分**：
-「模型要够强」—— 这套本质是「读文件 → 判断 → 执行」的多步推理。小模型容易读到一半就放弃或猜着干。这不在系统能控范围内。
-
----
-
-## 适用场景
-
-**适合**：
-- agent 拥有 ≥ 20 个技能 / 插件 / MCP
-- 发现 agent 经常「有工具不用，自己硬做」
-- 想让 agent 的行为**可预测、可审计、可扩展**
-- 要在多个 agent 之间**共享同一套能力定义**
-
-**不适合**：
-- 只有 3~5 个能力（直接列在 system prompt 里就行，不用索引）
-- 能力从不变化（那是一次性配置，不是体系）
+**Not solved:** model capability. This is a multi-step "read file → judge → act" loop. Small models give up halfway or start guessing. That's outside what a system can fix.
 
 ---
 
