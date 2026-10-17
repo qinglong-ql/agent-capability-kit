@@ -1,5 +1,7 @@
 # Agent Capability Kit · 智能体能力套件
 
+![Agent Capability Kit — 索引 · 模板 · 规矩](assets/banner.svg)
+
 > **你的 AI agent 有 375 个技能、39 个插件，但它自己不知道。**
 >
 > 一套三卷制，让 agent 在动手之前，先知道自己能干什么。

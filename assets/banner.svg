@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="1200" height="420" role="img" aria-label="Agent Capability Kit — Index, Template, Rules">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="55%" stop-color="#0d0f18"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="panel1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.03"/>
+    </linearGradient>
+    <linearGradient id="panel2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.03"/>
+    </linearGradient>
+    <linearGradient id="panel3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.03"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity="0.028" stroke-width="1"/>
+    </pattern>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="420" fill="url(#bg)"/>
+  <rect width="1200" height="420" fill="url(#grid)"/>
+
+  <!-- ambient glow -->
+  <ellipse cx="980" cy="150" rx="300" ry="180" fill="#22d3ee" opacity="0.055"/>
+  <ellipse cx="1080" cy="320" rx="260" ry="150" fill="#a78bfa" opacity="0.06"/>
+
+  <!-- left: capability graph nodes -->
+  <g opacity="0.42" stroke="#22d3ee" stroke-width="1" fill="none">
+    <path d="M70 300 L150 250 L120 180 L200 150 L260 220 L210 300 Z"/>
+    <path d="M150 250 L210 300 M120 180 L200 150 M200 150 L260 220"/>
+  </g>
+  <g fill="#22d3ee">
+    <circle cx="70" cy="300" r="3.2" opacity="0.9"/>
+    <circle cx="150" cy="250" r="3.6" opacity="0.9"/>
+    <circle cx="120" cy="180" r="2.8" opacity="0.8"/>
+    <circle cx="200" cy="150" r="3.4" opacity="0.9"/>
+    <circle cx="260" cy="220" r="2.8" opacity="0.8"/>
+    <circle cx="210" cy="300" r="3.2" opacity="0.85"/>
+  </g>
+
+  <!-- title -->
+  <text x="70" y="150" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="57" font-weight="800" fill="#ffffff" letter-spacing="1.5">AGENT CAPABILITY KIT</text>
+
+  <!-- accent rule -->
+  <rect x="72" y="178" width="150" height="4" rx="2" fill="url(#accent)"/>
+
+  <!-- subtitle -->
+  <text x="70" y="222" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="22" font-weight="500" fill="#9ca3af" letter-spacing="3.5">INDEX · TEMPLATE · RULES</text>
+
+  <!-- tagline -->
+  <text x="70" y="272" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="16" font-weight="400" fill="#6b7280">Your agent has the tools. It just doesn't know it.</text>
+
+  <!-- right: three stacked volumes -->
+  <g transform="translate(760 100)">
+    <!-- volume 3 (back) -->
+    <g transform="translate(74 -34) rotate(2)">
+      <rect x="0" y="0" width="300" height="112" rx="12" fill="url(#panel3)" stroke="#a78bfa" stroke-opacity="0.34"/>
+      <text x="22" y="46" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+            font-size="15" font-weight="700" fill="#c4b5fd" letter-spacing="1.6">III · RULES</text>
+      <text x="22" y="74" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+            font-size="12.5" fill="#8b8ba7">when to use which</text>
+    </g>
+    <!-- volume 2 (middle) -->
+    <g transform="translate(36 -4) rotate(1)">
+      <rect x="0" y="0" width="300" height="112" rx="12" fill="url(#panel2)" stroke="#38bdf8" stroke-opacity="0.34"/>
+      <text x="22" y="46" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+            font-size="15" font-weight="700" fill="#7dd3fc" letter-spacing="1.6">II · TEMPLATE</text>
+      <text x="22" y="74" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+            font-size="12.5" fill="#8b8ba7">how to add more</text>
+    </g>
+    <!-- volume 1 (front) -->
+    <g transform="translate(0 30)">
+      <rect x="0" y="0" width="300" height="112" rx="12" fill="url(#panel1)" stroke="#22d3ee" stroke-opacity="0.48" filter="url(#glow)"/>
+      <text x="22" y="46" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+            font-size="15" font-weight="700" fill="#67e8f9" letter-spacing="1.6">I · INDEX</text>
+      <text x="22" y="74" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+            font-size="12.5" fill="#9aa0ae">what do I have</text>
+    </g>
+  </g>
+
+  <!-- bottom hairline -->
+  <rect x="0" y="418" width="1200" height="2" fill="url(#accent)" opacity="0.35"/>
+</svg>

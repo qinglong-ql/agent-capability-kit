@@ -1,5 +1,7 @@
 # Agent Capability Kit
 
+![Agent Capability Kit — Index · Template · Rules](assets/banner.svg)
+
 > **Your AI agent has 375 skills and 39 plugins. It doesn't know that.**
 >
 > A three-volume system that teaches an agent what it can do — before it starts doing.
