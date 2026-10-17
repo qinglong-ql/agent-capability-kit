@@ -1,0 +1,27 @@
+# 依赖与构建产物
+node_modules/
+dist/
+*.log
+
+# 生成的索引（含本机路径与能力清单，不应入库）
+SKILLS-INDEX.zh.md
+PLUGINS-INDEX.zh.md
+MCP-INDEX.zh.md
+
+# 扫描中间产物
+skills-inventory.json
+dsh-plugins.json
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 本机路径泄露保护
+*本机*
+*.local.md
