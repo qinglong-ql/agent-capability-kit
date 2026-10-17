@@ -61,49 +61,106 @@
 
 ---
 
-## 五、快速安装（拿到仓库后 10 分钟装好）
+## 五、怎么安装（两条路，选一条）
 
-> 下面以 **DeepSeek Harness** 为例；其他宿主只差第 3 步的文件位置（见文末表格）。
+> **装好的标准**：问你的 agent「你有哪些能力？」，它能说出分类和数量，而不是瞎编。
 
-### 第 1 步：拿到本仓库
+### 方式 A：复制文字给 agent（最省事，推荐）
+
+> 把下面这段**整段复制**，发给你的 agent（粘贴进对话，或写进它常读的文件）。它读完就会在你的环境里创建三卷。
+
+```
+【任务：创建"能力三卷"】
+你是本机的 AI agent。请在我的环境里创建一套"能力三卷"，让任何 AI 看了就知道自己有什么能力、什么时候该用什么能力。
+
+一、要创建 3 类文件：
+1. 索引卷（告诉 agent 有什么能力）：SKILLS-INDEX.md、PLUGINS-INDEX.md、MCP-INDEX.md
+2. 模板卷（告诉 agent 怎么加新能力）：SKILL-TEMPLATE.md、PLUGIN-TEMPLATE.md、MCP-TEMPLATE.md
+3. 规矩卷（告诉 agent 什么时候用哪个）：写入我的 system prompt 文件（DeepSeek Harness 是 ~/.dsh/AGENTS.md；OpenClaw 是 agent persona 配置；Claude Code 是 CLAUDE.md；Cursor 是 .cursorrules）
+
+二、索引卷怎么写：
+- 每个能力只写一行：| 能力名 | 用途 |
+- 用途要用"用户会说的话"形容，不要用功能名
+- 例：| pdf | 读取/创建/转换/填表 |　| excel | 表格读写/计算/分析 |
+- 写索引前必须扫描真实文件（找所有 SKILL.md 的 name+description），不许凭想象编
+- 数量多（>100）就用脚本自动生成，数量少（<20）手写
+
+三、模板卷怎么写：
+- 每类能力一份模板，包含：name / description / 适用场景（含不适用）/ 前置条件 / 使用步骤 / 输出规范 / 注意事项
+- 最关键：description 必须写"用户可能说的原话关键词"，写功能名永远匹配不上
+- 例：不要写「PDF 处理器」，要写「当用户提到『PDF、转成PDF、读PDF、填表』时使用」
+
+四、规矩卷写什么（必须写进 system prompt 文件，不能只在对话里说）：
+【铁规则】
+1. 收到任务 → 先查能力索引
+2. 命中 → 必须先读完整说明书再动手，禁止凭印象
+3. 没命中 → 才用通用能力，并告知用户"没有对应能力，按通用方式处理"
+4. 只读命中项，绝不全部通读
+5. 用户点名某个能力 → 直接读那个，跳过索引
+6. 按说明书的输出规范交付，说明验证结果
+【发现流程】
+收到任务 → 扫技能目录（中文对不上→查分类索引）→ 按触发词匹配 → 有匹配？→ 读完整说明书→按步骤执行；无匹配→通用能力回答
+【执行纪律】
+- 用户提到工具类需求（文档/网页/表格/图片/搜索/定时等）→ 默认先查技能，不默认自己硬做
+- 说明书与常识冲突时以说明书为准；说明书有错，执行后说明偏差
+- 用技能前做环境检查；失败先报原因，不静默降级
+- 交付物必须给出：文件名、保存路径、打开方式
+
+五、完成标准：
+- 问我"你有哪些能力？"我能说出分类和数量，不是瞎编
+- 给我一个明显有对应技能的任务，我会先查索引再动手
+- 三类文件都建好，规矩已写进 system prompt 文件
+```
+
+### 方式 B：命令行安装（自己动手，DeepSeek Harness 示例）
+
+#### 前置：安装 Node.js（v18+）
+
+Windows 检查：`node -v`（没有就去 nodejs.org 装 LTS 版）。
+
+#### 第 1 步：拿到本仓库
 
 ```bash
 git clone https://github.com/qinglong-ql/agent-capability-kit.git
-# 或者网页上点 Code → Download ZIP，解压到任意目录
+cd agent-capability-kit
+# 没有 git 就网页 Code → Download ZIP，解压后进目录
 ```
 
-### 第 2 步：把模板放进技能目录
+#### 第 2 步：把模板放进技能目录
 
 ```bash
-# 把 templates/ 下 3 份模板拷到你的技能目录，当「参照格式」用（别覆盖已有文件）
+mkdir -p ~/.dsh/skills/_templates
 cp templates/*.md ~/.dsh/skills/_templates/
 ```
 
-### 第 3 步：把规矩写进 system prompt 文件（最重要）
-
-打开（没有就新建）`~/.dsh/AGENTS.md`，把 [`examples/AGENTS.md.example`](examples/AGENTS.md.example) 的内容**追加**进去，保存。
-
-> ⚠️ 这一步做错 = 整套白装。规矩必须写进文件，不是对话里说一句。
-
-### 第 4 步：扫描真实技能，生成索引
-
-先打开 `tools/dump-skills.cjs`，把脚本顶部的 `dirs` 改成**你宿主的技能目录**，然后：
+#### 第 3 步：把规矩写进 system prompt 文件（最关键）
 
 ```bash
-node tools/dump-skills.cjs        # 扫描 → %TEMP%/skills-inventory.json
-node tools/gen-skills-index.cjs   # 生成 → ~/.dsh/SKILLS-INDEX.zh.md
+# 先备份
+cp ~/.dsh/AGENTS.md ~/.dsh/AGENTS.md.bak.$(date +%Y%m%d%H%M%S)
+
+# 把规矩示例追加进去（没有 AGENTS.md 会自动创建）
+type examples\AGENTS.md.example >> ~/.dsh\AGENTS.md
+# macOS/Linux 用：cat examples/AGENTS.md.example >> ~/.dsh/AGENTS.md
 ```
 
-插件索引同理（先改 `tools/dump-plugins.cjs` 里的 profileDir）：
+> ⚠️ 这步做错 = 整套白装。规矩必须写进文件，不是对话里说一句。
+
+#### 第 4 步：扫描真实技能，生成索引
 
 ```bash
+# 先改 tools/dump-skills.cjs 顶部的 dirs 为你的技能目录
+# 例如：const dirs = [path.join(HOME, '.dsh', 'skills'), path.join(HOME, '.agents', 'skills')];
+
+node tools/dump-skills.cjs        # 扫描 → %TEMP%/skills-inventory.json
+node tools/gen-skills-index.cjs   # 生成 → ~/.dsh/SKILLS-INDEX.zh.md
+
+# 插件索引（先改 dump-plugins.cjs 的 profileDir）
 node tools/dump-plugins.cjs
 node tools/gen-plugins-index.cjs  # 生成 → ~/.dsh/PLUGINS-INDEX.zh.md
 ```
 
-> 需要 Node.js（v18+）。四个脚本都是纯 Node，无外部依赖。
-
-### 第 5 步：重启 + 验证
+#### 第 5 步：重启 + 验证
 
 - 技能：**重载会话**
 - 插件 / MCP：**重启宿主**
@@ -120,9 +177,9 @@ node tools/gen-plugins-index.cjs  # 生成 → ~/.dsh/PLUGINS-INDEX.zh.md
 
 ---
 
-## 六、自己动手搭这套（可选，5 步）
+## 六、自己动手搭这套（可选，从零写）
 
-> 不想用现成模板、想从零写，才需要看这节。
+> 不想用现成模板、想完全从零写，才需要看这节。
 
 ### 第 1 步：先看清你手上有什么
 
@@ -187,15 +244,15 @@ node tools/gen-plugins-index.cjs  # 生成 → ~/.dsh/PLUGINS-INDEX.zh.md
 ```
 你的宿主根目录/
 ├── AGENTS.md（或 CLAUDE.md / .cursorrules）  ← 卷三：规矩
-├── SKILLS-INDEX.md                            ← 卷一：技能索引
-├── PLUGINS-INDEX.md                           ← 卷一：插件索引
-├── MCP-INDEX.md                               ← 卷一：MCP 索引
-├── SKILL-TEMPLATE.md                          ← 卷二：技能模板
-├── PLUGIN-TEMPLATE.md                         ← 卷二：插件模板
-└── MCP-TEMPLATE.md                            ← 卷二：MCP 模板
+├── SKILLS-INDEX.zh.md                        ← 卷一：技能索引
+├── PLUGINS-INDEX.zh.md                       ← 卷一：插件索引
+├── MCP-INDEX.zh.md                           ← 卷一：MCP 索引
+├── SKILL-TEMPLATE.md                         ← 卷二：技能模板
+├── PLUGIN-TEMPLATE.md                        ← 卷二：插件模板
+└── MCP-TEMPLATE.md                           ← 卷二：MCP 模板
 ```
 
-**7 个 markdown 文件，无依赖、不用编程。**
+**7 个文件（含 AGENTS.md）就是全部足迹，无依赖、不用编程。**
 
 ---
 
