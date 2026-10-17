@@ -61,7 +61,68 @@ They are three different things, with different reload semantics (check your hos
 
 ---
 
-## 5. Install in 5 steps
+## 5. Quick install (from repo to running in ~10 minutes)
+
+> Shown with **DeepSeek Harness**; other hosts only differ in step 3's file location (table at the end).
+
+### Step 1: Get this repo
+
+```bash
+git clone https://github.com/qinglong-ql/agent-capability-kit.git
+# or click Code → Download ZIP and unzip anywhere
+```
+
+### Step 2: Copy the templates into your skills dir
+
+```bash
+# Copy the 3 templates as reference formats (don't overwrite existing files)
+cp templates/*.md ~/.dsh/skills/_templates/
+```
+
+### Step 3: Put the rules into your system prompt file (most important)
+
+Open (or create) `~/.dsh/AGENTS.md` and **append** the contents of [`examples/AGENTS.md.example`](examples/AGENTS.md.example). Save.
+
+> ⚠️ Get this wrong and nothing else matters. The rules must live in a file, not be said once in chat.
+
+### Step 4: Scan your real skills, generate the index
+
+First open `tools/dump-skills.cjs` and change the `dirs` array at the top to **your host's skills directories**, then:
+
+```bash
+node tools/dump-skills.cjs        # scan → %TEMP%/skills-inventory.json
+node tools/gen-skills-index.cjs   # generate → ~/.dsh/SKILLS-INDEX.zh.md
+```
+
+Plugins index, same idea (first edit `profileDir` in `tools/dump-plugins.cjs`):
+
+```bash
+node tools/dump-plugins.cjs
+node tools/gen-plugins-index.cjs  # generate → ~/.dsh/PLUGINS-INDEX.zh.md
+```
+
+> Requires Node.js (v18+). All four scripts are pure Node, zero dependencies.
+
+### Step 5: Restart and verify
+
+- Skills: **reload the session**
+- Plugins / MCP: **restart the host**
+- Then ask it: **"What capabilities do you have?"** — if it answers with categories and counts, you're done
+
+### Other hosts: step 3's file location
+
+| Host | Where the rules go |
+|---|---|
+| **DeepSeek Harness** | `~/.dsh/AGENTS.md` (user level) |
+| **OpenClaw** | agent persona / system prompt config |
+| **Claude Code** | `CLAUDE.md` at project root |
+| **Cursor** | `.cursorrules` at project root |
+
+---
+
+## 6. Build it yourself (optional, 5 steps)
+
+> Only if you want to start from scratch instead of using the ready-made templates.
 
 ### Step 1: See what you actually have
 
@@ -110,8 +171,6 @@ Put these into your host's **system prompt file** (not once in chat):
 
 > Said in chat → works this turn, gone next. Written to the system-prompt file → injected every session, always there.
 
-Where each host keeps it: DeepSeek Harness → `~/.dsh/AGENTS.md`; OpenClaw → agent persona config; Claude Code → `CLAUDE.md`; Cursor → `.cursorrules`.
-
 ### Step 5: Verify it works
 
 **The only test that matters:** give it a task that clearly has a matching capability. Watch whether it checks first.
@@ -123,7 +182,7 @@ Where each host keeps it: DeepSeek Harness → `~/.dsh/AGENTS.md`; OpenClaw → 
 
 ---
 
-## 6. What it looks like when installed
+## 7. What it looks like when installed
 
 ```
 <your host root>/
@@ -140,7 +199,7 @@ Where each host keeps it: DeepSeek Harness → `~/.dsh/AGENTS.md`; OpenClaw → 
 
 ---
 
-## 7. Tested at (reference only)
+## 8. Tested at (reference only)
 
 Built and measured on a real agent (DeepSeek Harness, Windows): several hundred skills, dozens of plugins, 2 MCP servers, 100% auto-classified. **These numbers are that machine, not a standard.**
 
@@ -152,7 +211,7 @@ Built and measured on a real agent (DeepSeek Harness, Windows): several hundred 
 
 ---
 
-## 8. Pitfalls
+## 9. Pitfalls
 
 1. **Never classify by folder name** — classify by content (name + description), never by path
 2. **Rules must live in a file** — said once in chat is useless
@@ -164,7 +223,7 @@ Built and measured on a real agent (DeepSeek Harness, Windows): several hundred 
 
 ---
 
-## 9. When to use it
+## 10. When to use it
 
 **Good fit:** 20+ capabilities; you keep catching the agent "not using the tool it obviously has"; you want predictable, auditable, extensible behavior.
 
@@ -172,6 +231,6 @@ Built and measured on a real agent (DeepSeek Harness, Windows): several hundred 
 
 ---
 
-## 10. License
+## 11. License
 
 MIT — free, modifiable, redistributable, attribution not required. The only requirement: keep the copyright notice in the [`LICENSE`](LICENSE) file.
