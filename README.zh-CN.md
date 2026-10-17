@@ -61,7 +61,68 @@
 
 ---
 
-## 五、怎么装上（5 步）
+## 五、快速安装（拿到仓库后 10 分钟装好）
+
+> 下面以 **DeepSeek Harness** 为例；其他宿主只差第 3 步的文件位置（见文末表格）。
+
+### 第 1 步：拿到本仓库
+
+```bash
+git clone https://github.com/qinglong-ql/agent-capability-kit.git
+# 或者网页上点 Code → Download ZIP，解压到任意目录
+```
+
+### 第 2 步：把模板放进技能目录
+
+```bash
+# 把 templates/ 下 3 份模板拷到你的技能目录，当「参照格式」用（别覆盖已有文件）
+cp templates/*.md ~/.dsh/skills/_templates/
+```
+
+### 第 3 步：把规矩写进 system prompt 文件（最重要）
+
+打开（没有就新建）`~/.dsh/AGENTS.md`，把 [`examples/AGENTS.md.example`](examples/AGENTS.md.example) 的内容**追加**进去，保存。
+
+> ⚠️ 这一步做错 = 整套白装。规矩必须写进文件，不是对话里说一句。
+
+### 第 4 步：扫描真实技能，生成索引
+
+先打开 `tools/dump-skills.cjs`，把脚本顶部的 `dirs` 改成**你宿主的技能目录**，然后：
+
+```bash
+node tools/dump-skills.cjs        # 扫描 → %TEMP%/skills-inventory.json
+node tools/gen-skills-index.cjs   # 生成 → ~/.dsh/SKILLS-INDEX.zh.md
+```
+
+插件索引同理（先改 `tools/dump-plugins.cjs` 里的 profileDir）：
+
+```bash
+node tools/dump-plugins.cjs
+node tools/gen-plugins-index.cjs  # 生成 → ~/.dsh/PLUGINS-INDEX.zh.md
+```
+
+> 需要 Node.js（v18+）。四个脚本都是纯 Node，无外部依赖。
+
+### 第 5 步：重启 + 验证
+
+- 技能：**重载会话**
+- 插件 / MCP：**重启宿主**
+- 然后问它：**「你有哪些能力？」** —— 能说出分类和数量 = 装好了
+
+### 其他宿主：第 3 步的文件位置
+
+| 宿主 | 规矩写进哪 |
+|---|---|
+| **DeepSeek Harness** | `~/.dsh/AGENTS.md`（用户级） |
+| **OpenClaw** | agent 的 persona / system prompt 配置 |
+| **Claude Code** | 项目根 `CLAUDE.md` |
+| **Cursor** | `.cursorrules` |
+
+---
+
+## 六、自己动手搭这套（可选，5 步）
+
+> 不想用现成模板、想从零写，才需要看这节。
 
 ### 第 1 步：先看清你手上有什么
 
@@ -110,8 +171,6 @@
 
 > 对话里说 → 这轮有效下轮忘；写进文件 → 每次会话自动加载，永远在。
 
-各宿主 system prompt 位置：DeepSeek Harness → `~/.dsh/AGENTS.md`；OpenClaw → agent persona 配置；Claude Code → `CLAUDE.md`；Cursor → `.cursorrules`。
-
 ### 第 5 步：验证生效
 
 **最硬的一条：** 给它一个明显有对应技能的任务，看它会不会先查。
@@ -123,7 +182,7 @@
 
 ---
 
-## 六、装完长什么样
+## 七、装完长什么样
 
 ```
 你的宿主根目录/
@@ -140,7 +199,7 @@
 
 ---
 
-## 七、实测情况（仅供参考）
+## 八、实测情况（仅供参考）
 
 在 DeepSeek Harness（Windows）上实际建过一套：几百个技能、几十个插件、2 个 MCP，自动分类 100% 归位。**数字只代表当时那台机器，你的环境不一样。**
 
@@ -152,7 +211,7 @@
 
 ---
 
-## 八、常见坑
+## 九、常见坑
 
 1. **别按文件夹名归类** —— 分类看内容（name + description），不看路径
 2. **规矩必须写进文件** —— 对话里说一遍没用
@@ -164,7 +223,7 @@
 
 ---
 
-## 九、适用场景
+## 十、适用场景
 
 **适合**：能力 20+；经常发现「明明有工具却不用」；想要可预测、可检查、可扩展的行为。
 
@@ -172,6 +231,6 @@
 
 ---
 
-## 十、许可
+## 十一、许可
 
 MIT License —— 免费、可改、可再分发、可不署名；唯一要求是保留 `LICENSE` 文件里的版权声明。
